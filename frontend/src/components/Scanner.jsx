@@ -5,16 +5,16 @@ import api from '../utils/api'; // <- Importamos nuestro nuevo cerebro central
 export default function Scanner() {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
-  
+
   const [textoDetectado, setTextoDetectado] = useState('');
   const [productoDetectado, setProductoDetectado] = useState(null);
   // 👇 NUEVOS ESTADOS PARA LAS RECOMENDACIONES 👇
   const [recomendaciones, setRecomendaciones] = useState([]);
   const [mensajeScanner, setMensajeScanner] = useState('');
-  
+
   const [procesando, setProcesando] = useState(false);
   const [errorCamera, setErrorCamera] = useState('');
-  
+
   const [cantidad, setCantidad] = useState('');
   const [procesandoMovimiento, setProcesandoMovimiento] = useState(false);
   const [mensajeMovimiento, setMensajeMovimiento] = useState('');
@@ -24,8 +24,8 @@ export default function Scanner() {
   useEffect(() => {
     const iniciarCamara = async () => {
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({ 
-          video: { facingMode: 'environment' } 
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: 'environment' }
         });
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
@@ -44,7 +44,7 @@ export default function Scanner() {
 
   const capturarYEnviar = async () => {
     if (!videoRef.current || !canvasRef.current) return;
-    
+
     setProcesando(true);
     setTextoDetectado('');
     setProductoDetectado(null);
@@ -65,19 +65,19 @@ export default function Scanner() {
     const imagenBase64 = canvas.toDataURL('image/jpeg').split(',')[1];
 
     try {
-      const respuesta = await api.post('inventario/escanear/', { 
-        imagen: imagenBase64 
+      const respuesta = await api.post('inventario/escanear/', {
+        imagen: imagenBase64
       });
 
       const datos = respuesta.data;
-      
+
       setTextoDetectado(datos.texto_bruto || 'No se detectó texto.');
       setMensajeScanner(datos.mensaje || ''); // Guardamos el mensaje de la IA
-      
+
       if (datos.producto_detectado) {
         setProductoDetectado(datos.producto_detectado);
       }
-      
+
       // 👇 Guardamos las alternativas si existen 👇
       if (datos.recomendaciones) {
         setRecomendaciones(datos.recomendaciones);
@@ -115,7 +115,7 @@ export default function Scanner() {
       setMensajeMovimiento(`✅ ${tipo} registrada. Nuevo stock: ${datos.nuevo_stock}`);
       setProductoDetectado({ ...productoDetectado, stock_actual: datos.nuevo_stock });
       setCantidad('');
-      
+
     } catch (error) {
       if (error.response && error.response.data && error.response.data.error) {
         setMensajeMovimiento(`❌ Error: ${error.response.data.error}`);
@@ -155,8 +155,8 @@ export default function Scanner() {
         <canvas ref={canvasRef} style={{ display: 'none' }} />
       </div>
 
-      <button 
-        onClick={capturarYEnviar} 
+      <button
+        onClick={capturarYEnviar}
         disabled={procesando || errorCamera}
         style={{ width: '100%', padding: '15px', backgroundColor: '#4CAF50', color: 'white', border: 'none', borderRadius: '8px', fontSize: '18px', fontWeight: 'bold', cursor: 'pointer', marginBottom: '20px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}
       >
@@ -168,29 +168,38 @@ export default function Scanner() {
           <h3 style={{ margin: '0 0 10px 0', color: '#1565c0' }}>✅ Producto Reconocido</h3>
           <p style={{ margin: '5px 0', fontWeight: 'bold', fontSize: '18px' }}>{productoDetectado.nombre_comercial}</p>
           <p style={{ margin: '5px 0', color: '#555' }}>Presentación: {productoDetectado.presentacion}</p>
-          
+
+          {/*  NUEVO BLOQUE DE DESCRIPCIÓN */}
+          {productoDetectado.descripcion && (
+            <div style={{ margin: '12px 0', padding: '10px', backgroundColor: '#ffffff', borderLeft: '4px solid #1976d2', borderRadius: '4px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+              <p style={{ margin: 0, fontSize: '14px', color: '#444', fontStyle: 'italic', lineHeight: '1.4' }}>
+                {productoDetectado.descripcion}
+              </p>
+            </div>
+          )}
+
           {/* El stock se pone rojo si es 0 */}
           <p style={{ margin: '15px 0', fontSize: '16px' }}>
             Stock Actual: <strong style={{ color: productoDetectado.stock_actual > 0 ? 'green' : 'red' }}>{productoDetectado.stock_actual}</strong>
           </p>
 
           <div style={{ display: 'flex', gap: '10px', marginTop: '15px' }}>
-            <input 
-              type="number" 
-              placeholder="Cant." 
+            <input
+              type="number"
+              placeholder="Cant."
               value={cantidad}
               onChange={(e) => setCantidad(e.target.value)}
               min="1"
               style={{ width: '80px', padding: '10px', borderRadius: '5px', border: '1px solid #ccc', fontSize: '16px' }}
             />
-            <button 
+            <button
               onClick={() => registrarMovimiento('ENTRADA')}
               disabled={procesandoMovimiento}
               style={{ flex: 1, padding: '10px', backgroundColor: '#2e7d32', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold' }}
             >
               + Entrada
             </button>
-            <button 
+            <button
               onClick={() => registrarMovimiento('SALIDA')}
               disabled={procesandoMovimiento || productoDetectado.stock_actual <= 0}
               style={{ flex: 1, padding: '10px', backgroundColor: '#c62828', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold' }}
@@ -198,7 +207,7 @@ export default function Scanner() {
               - Salida
             </button>
           </div>
-          
+
           {mensajeMovimiento && (
             <p style={{ marginTop: '15px', textAlign: 'center', fontWeight: 'bold', color: '#333' }}>{mensajeMovimiento}</p>
           )}
