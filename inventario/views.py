@@ -55,14 +55,21 @@ def escanear_etiqueta(request):
         mensaje = 'Texto leído, pero no coincide con el catálogo'
 
         if producto_obj:
+            # 👇 1. Vamos a buscar la descripción a la tabla vinculada de forma segura
+            texto_descripcion = ""
+            if producto_obj.categoria: # Si el producto tiene una categoría asignada...
+                # Viajamos a la tabla categoria y extraemos la descripcion
+                texto_descripcion = producto_obj.categoria.descripcion 
+
+            # 👇 2. Armamos el diccionario
             datos_producto = {
                 'id': producto_obj.id,
                 'nombre_comercial': producto_obj.nombre_comercial,
                 'presentacion': producto_obj.presentacion,
                 'stock_actual': producto_obj.stock_actual,
                 'ingrediente_activo': producto_obj.ingrediente_activo,
-                # 👇 Agregamos la descripción aquí 👇
-                'descripcion': producto_obj.descripcion 
+                # Inyectamos la variable que acabamos de crear
+                'descripcion': texto_descripcion 
             }
             if producto_obj.stock_actual > 0:
                 mensaje = 'Producto identificado correctamente y disponible en stock.'
