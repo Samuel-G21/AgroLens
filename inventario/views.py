@@ -60,9 +60,10 @@ def escanear_etiqueta(request):
                 'nombre_comercial': producto_obj.nombre_comercial,
                 'presentacion': producto_obj.presentacion,
                 'stock_actual': producto_obj.stock_actual,
-                'ingrediente_activo': producto_obj.ingrediente_activo
+                'ingrediente_activo': producto_obj.ingrediente_activo,
+                # 👇 Agregamos la descripción aquí 👇
+                'descripcion': producto_obj.descripcion 
             }
-
             if producto_obj.stock_actual > 0:
                 mensaje = 'Producto identificado correctamente y disponible en stock.'
             else:
